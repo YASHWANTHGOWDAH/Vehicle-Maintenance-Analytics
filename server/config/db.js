@@ -289,6 +289,23 @@ function initFallbackCollection() {
             })).sort((a, b) => b.totalRepairCost - a.totalRepairCost);
           }
 
+          // 7. Top 10 expensive repairs
+          if (pStr.includes('$concat') || (pStr.includes('total_cost') && pStr.includes('10') && pStr.includes('$limit'))) {
+            const sorted = [...inMemoryRecords].sort((a, b) => b.total_cost - a.total_cost).slice(0, 10);
+            return sorted.map(r => ({
+              service_id: r.service_id,
+              service_date: (r.service_date_str || (r.service_date instanceof Date ? r.service_date.toISOString().slice(0, 10) : String(r.service_date))),
+              vehicle: `${r.vehicle_brand} ${r.vehicle_model} (${r.vehicle_type})`,
+              service_type: r.service_type,
+              parts_cost: r.parts_cost,
+              labor_cost: r.labor_cost,
+              total_cost: r.total_cost,
+              odometer_km: r.odometer_km,
+              service_center: r.service_center,
+              maintenance_status: r.maintenance_status
+            }));
+          }
+
           // 2. Records by vehicle brand
           if (pStr.includes('$vehicle_brand') && !pStr.includes('brandCount')) {
             const groups = {};
@@ -377,22 +394,7 @@ function initFallbackCollection() {
             })).sort((a, b) => b.count - a.count);
           }
 
-          // 7. Top 10 expensive
-          if (pStr.includes('total_cost') && pStr.includes('10')) {
-            const sorted = [...inMemoryRecords].sort((a, b) => b.total_cost - a.total_cost).slice(0, 10);
-            return sorted.map(r => ({
-              service_id: r.service_id,
-              service_date: (r.service_date_str || r.service_date.toISOString().slice(0, 10)),
-              vehicle: `${r.vehicle_brand} ${r.vehicle_model} (${r.vehicle_type})`,
-              service_type: r.service_type,
-              parts_cost: r.parts_cost,
-              labor_cost: r.labor_cost,
-              total_cost: r.total_cost,
-              odometer_km: r.odometer_km,
-              service_center: r.service_center,
-              maintenance_status: r.maintenance_status
-            }));
-          }
+
 
           // 8. Service center performance
           if (pStr.includes('$service_center')) {
