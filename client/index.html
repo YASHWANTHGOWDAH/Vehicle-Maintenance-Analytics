@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Service and Maintenance Analytics Using MongoDB</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js for Interactive Data Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <path d="M9 17h6"/>
+            <circle cx="17" cy="17" r="2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">Vehicle Service & Maintenance Analytics</h1>
+          <p class="app-subtitle">MongoDB Database Analytics & Service Intelligence System</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <span class="db-pill" id="dbStatusPill">
+          <span class="status-dot"></span>
+          <span id="dbStatusText">MongoDB Connected</span>
+        </span>
+        <button class="btn btn-outline btn-sm" id="btnRefreshAll" title="Refresh Data">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs-wrapper">
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="tab-dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+        </button>
+        <button class="nav-tab" data-tab="tab-records">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Service Records
+        </button>
+        <button class="nav-tab" data-tab="tab-analytics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Analytics & Pipelines
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: DASHBOARD OVERVIEW -->
+    <!-- ======================================================== -->
+    <section id="tab-dashboard" class="tab-content active">
+      <!-- KPI Metric Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Total Service Records</span>
+            <span class="kpi-icon blue">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpiTotalRecords">600</div>
+          <div class="kpi-subtext">Original synthetic academic records</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Total Repair Expenses</span>
+            <span class="kpi-icon green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpiTotalExpenses">₹0.00</div>
+          <div class="kpi-subtext">Parts + Labor cumulative cost</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Average Repair Cost</span>
+            <span class="kpi-icon purple">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpiAvgCost">₹0.00</div>
+          <div class="kpi-subtext">Calculated via MongoDB $avg</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Vehicle Brands</span>
+            <span class="kpi-icon orange">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpiBrandCount">13</div>
+          <div class="kpi-subtext">Automobile & 2-Wheeler brands</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Top Service Type</span>
+            <span class="kpi-icon teal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpiCommonService">Loading...</div>
+          <div class="kpi-subtext" id="kpiCommonServiceSub">Most frequent operation</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Banner -->
+      <div class="banner-card">
+        <div class="banner-content">
+          <h3>Vehicle Service Center Management</h3>
+          <p>Easily query, filter, sort, update and analyze vehicle maintenance data stored in MongoDB. Perform live aggregations to derive business intelligence.</p>
+        </div>
+        <div class="banner-actions">
+          <button class="btn btn-primary" id="btnOpenAddModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Service Record
+          </button>
+          <button class="btn btn-secondary" onclick="switchTab('tab-records')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Explore Records
+          </button>
+        </div>
+      </div>
+
+      <!-- Dashboard Visual Charts Grid -->
+      <div class="charts-grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Vehicle Types Distribution</h3>
+              <p class="card-subtitle">Volume of maintenance visits grouped by category</p>
+            </div>
+            <span class="badge badge-info">MongoDB $group</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartVehicleTypes"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Maintenance Status Breakdown</h3>
+              <p class="card-subtitle">Completed vs In Progress vs Pending</p>
+            </div>
+            <span class="badge badge-info">Live Pipeline</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartStatusPie"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Monthly Maintenance Expense Trend</h3>
+              <p class="card-subtitle">Monthly cumulative costs in Indian Rupees (₹)</p>
+            </div>
+            <span class="badge badge-info">Timeline Aggregation</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartMonthlyExpenses"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Top Serviced Vehicle Brands</h3>
+              <p class="card-subtitle">Service frequency by manufacturer</p>
+            </div>
+            <span class="badge badge-info">Brand Ranking</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartTopBrands"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: SERVICE RECORDS (SEARCH, FILTER, SORT, CRUD) -->
+    <!-- ======================================================== -->
+    <section id="tab-records" class="tab-content">
+      <div class="card">
+        <div class="card-header filter-header">
+          <div>
+            <h3 class="card-title">Vehicle Service Records</h3>
+            <p class="card-subtitle">Search, filter, paginate and manage all 600 dataset records</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btnOpenAddModal2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add New Record
+          </button>
+        </div>
+
+        <!-- Filter & Search Controls Bar -->
+        <div class="filter-controls-container">
+          <div class="filter-row">
+            <div class="filter-group flex-2">
+              <label for="searchInput">Search Records</label>
+              <div class="search-input-box">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="searchInput" placeholder="Search by ID (e.g. VS0391), Brand, Model, Service...">
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterBrand">Vehicle Brand</label>
+              <select id="filterBrand">
+                <option value="All">All Brands</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterType">Vehicle Type</label>
+              <select id="filterType">
+                <option value="All">All Types</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterServiceType">Service Type</label>
+              <select id="filterServiceType">
+                <option value="All">All Services</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterStatus">Status</label>
+              <select id="filterStatus">
+                <option value="All">All Statuses</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-row secondary-filter-row">
+            <div class="filter-group">
+              <label for="filterCenter">Service Center</label>
+              <select id="filterCenter">
+                <option value="All">All Service Centers</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="filterMinCost">Min Cost (₹)</label>
+              <input type="number" id="filterMinCost" placeholder="0">
+            </div>
+
+            <div class="filter-group">
+              <label for="filterMaxCost">Max Cost (₹)</label>
+              <input type="number" id="filterMaxCost" placeholder="30000">
+            </div>
+
+            <div class="filter-group">
+              <label for="filterStartDate">From Date</label>
+              <input type="date" id="filterStartDate">
+            </div>
+
+            <div class="filter-group">
+              <label for="filterEndDate">To Date</label>
+              <input type="date" id="filterEndDate">
+            </div>
+
+            <div class="filter-group">
+              <label for="sortBy">Sort By</label>
+              <select id="sortBy">
+                <option value="service_date">Service Date</option>
+                <option value="total_cost">Total Cost</option>
+                <option value="odometer_km">Odometer KM</option>
+                <option value="service_id">Service ID</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="sortOrder">Order</label>
+              <select id="sortOrder">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+
+            <div class="filter-buttons">
+              <button class="btn btn-primary btn-sm" id="btnApplyFilters">Apply Filters</button>
+              <button class="btn btn-outline btn-sm" id="btnResetFilters">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Information & Summary Bar -->
+        <div class="table-meta-bar">
+          <span id="recordsCountText">Showing 0 of 600 records</span>
+          <span class="academic-note-badge" title="Protected academic dataset">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Dataset Integrity Active (600 Records)
+          </span>
+        </div>
+
+        <!-- Responsive Data Table -->
+        <div class="table-responsive">
+          <table class="data-table" id="recordsTable">
+            <thead>
+              <tr>
+                <th>Service ID</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Service Performed</th>
+                <th>Parts Cost</th>
+                <th>Labor Cost</th>
+                <th>Total Cost</th>
+                <th>Odometer</th>
+                <th>Service Center</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody">
+              <tr>
+                <td colspan="13" class="text-center py-4">Loading service records from MongoDB...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container">
+          <div class="page-size-selector">
+            <label for="pageSizeSelect">Rows per page:</label>
+            <select id="pageSizeSelect">
+              <option value="10">10</option>
+              <option value="15" selected>15</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          <div class="pagination-buttons">
+            <button class="btn btn-outline btn-sm" id="btnPrevPage" disabled>
+              &larr; Previous
+            </button>
+            <span class="page-indicator" id="pageIndicator">Page 1 of 40</span>
+            <button class="btn btn-outline btn-sm" id="btnNextPage">
+              Next &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: ANALYTICS & 8 AGGREGATION PIPELINES -->
+    <!-- ======================================================== -->
+    <section id="tab-analytics" class="tab-content">
+      <div class="section-title-bar">
+        <div>
+          <h2>MongoDB Aggregation Analytics Engine</h2>
+          <p>Real-time analytical pipelines computed directly using MongoDB operators: $match, $group, $sum, $avg, $sort, $limit, $project</p>
+        </div>
+      </div>
+
+      <!-- Parts vs Labor Breakdown Highlight Card -->
+      <div class="card mb-4" id="partsLaborHighlightCard">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Aggregation Pipeline 5: Parts Cost vs Labor Cost Analysis</h3>
+            <p class="card-subtitle">Overall expenditure distribution across all maintenance visits</p>
+          </div>
+          <span class="badge badge-success">Pipeline Output</span>
+        </div>
+        <div class="parts-labor-summary-grid">
+          <div class="parts-labor-stat">
+            <span class="label">Total Parts Expense</span>
+            <span class="val" id="valTotalParts">₹0.00</span>
+            <span class="pct" id="pctParts">0% of total spend</span>
+          </div>
+          <div class="parts-labor-stat">
+            <span class="label">Total Labor Expense</span>
+            <span class="val" id="valTotalLabor">₹0.00</span>
+            <span class="pct" id="pctLabor">0% of total spend</span>
+          </div>
+          <div class="parts-labor-stat">
+            <span class="label">Gross Maintenance Revenue</span>
+            <span class="val" id="valGrossRevenue">₹0.00</span>
+            <span class="pct">100% (Parts + Labor)</span>
+          </div>
+          <div class="parts-labor-stat">
+            <span class="label">Average Parts per Service</span>
+            <span class="val" id="valAvgParts">₹0.00</span>
+            <span class="pct">Per repair visit</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aggregations Grid 1: Vehicle Type & Brands -->
+      <div class="charts-grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">1. Repair Cost by Vehicle Type</h3>
+              <p class="card-subtitle">Total & Average cost grouped by category</p>
+            </div>
+            <span class="badge badge-info">$group &amp; $avg</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartAnalyticsVehicleType"></canvas>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="data-table table-sm" id="tableVehicleTypeCost">
+              <thead>
+                <tr>
+                  <th>Vehicle Type</th>
+                  <th>Service Visits</th>
+                  <th>Total Cost</th>
+                  <th>Average Cost</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">2. Records by Vehicle Brand</h3>
+              <p class="card-subtitle">Volume & total expenses by manufacturer</p>
+            </div>
+            <span class="badge badge-info">$group &amp; $sum</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartAnalyticsBrands"></canvas>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="data-table table-sm" id="tableBrandStats">
+              <thead>
+                <tr>
+                  <th>Brand</th>
+                  <th>Visits</th>
+                  <th>Total Expenses</th>
+                  <th>Avg Cost</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aggregations Grid 2: Service Types & Service Centers -->
+      <div class="charts-grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">3. Most Frequent Service Types</h3>
+              <p class="card-subtitle">Repair frequency and average bill amount</p>
+            </div>
+            <span class="badge badge-info">$group &amp; $sort</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartAnalyticsServices"></canvas>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="data-table table-sm" id="tableFrequentServices">
+              <thead>
+                <tr>
+                  <th>Service Type</th>
+                  <th>Frequency</th>
+                  <th>Total Revenue</th>
+                  <th>Avg Cost</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">8. Service Center Performance</h3>
+              <p class="card-subtitle">Workload distribution and average ticket size</p>
+            </div>
+            <span class="badge badge-info">Multi-Center Analysis</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="chartAnalyticsCenters"></canvas>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="data-table table-sm" id="tableCenterStats">
+              <thead>
+                <tr>
+                  <th>Service Center</th>
+                  <th>Total Jobs</th>
+                  <th>Avg Cost</th>
+                  <th>Total Revenue</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline 7: Top 10 Most Expensive Repairs Table -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">7. Top 10 Most Expensive Repairs</h3>
+            <p class="card-subtitle">Highest billing maintenance jobs across the dataset ($sort: { total_cost: -1 }, $limit: 10)</p>
+          </div>
+          <span class="badge badge-danger">High Impact</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="tableTopExpensive">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Service ID</th>
+                <th>Date</th>
+                <th>Vehicle</th>
+                <th>Service Performed</th>
+                <th>Parts Cost</th>
+                <th>Labor Cost</th>
+                <th>Total Cost</th>
+                <th>Odometer</th>
+                <th>Service Center</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD SERVICE RECORD -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalAddRecord">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Insert New Service Record</h3>
+        <button class="modal-close" id="btnCloseAddModal">&times;</button>
+      </div>
+      <form id="formAddRecord">
+        <div class="modal-body">
+          <div class="form-alert" id="addFormAlert" style="display: none;"></div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="addServiceId">Service ID *</label>
+              <div class="input-with-action">
+                <input type="text" id="addServiceId" placeholder="e.g. VS-TEST-101" required>
+                <button type="button" class="btn btn-outline btn-xs" id="btnGenTestId" title="Generate Test ID">Auto ID</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="addServiceDate">Service Date *</label>
+              <input type="date" id="addServiceDate" required>
+            </div>
+
+            <div class="form-group">
+              <label for="addVehicleType">Vehicle Type *</label>
+              <select id="addVehicleType" required>
+                <option value="">Select Type</option>
+                <option value="Hatchback">Hatchback</option>
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Motorcycle">Motorcycle</option>
+                <option value="Van">Van</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="addVehicleBrand">Vehicle Brand *</label>
+              <input type="text" id="addVehicleBrand" placeholder="e.g. Tata, Honda, Hyundai" required>
+            </div>
+
+            <div class="form-group">
+              <label for="addVehicleModel">Vehicle Model *</label>
+              <input type="text" id="addVehicleModel" placeholder="e.g. Harrier, City, Creta" required>
+            </div>
+
+            <div class="form-group">
+              <label for="addServiceType">Service Performed *</label>
+              <select id="addServiceType" required>
+                <option value="">Select Service</option>
+                <option value="General Service">General Service</option>
+                <option value="Oil Change">Oil Change</option>
+                <option value="Brake Repair">Brake Repair</option>
+                <option value="Clutch Repair">Clutch Repair</option>
+                <option value="Engine Repair">Engine Repair</option>
+                <option value="Transmission Service">Transmission Service</option>
+                <option value="Tire Replacement">Tire Replacement</option>
+                <option value="Wheel Alignment">Wheel Alignment</option>
+                <option value="AC Repair">AC Repair</option>
+                <option value="Battery Replacement">Battery Replacement</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="addPartsCost">Parts Cost (₹) *</label>
+              <input type="number" id="addPartsCost" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+              <label for="addLaborCost">Labor Cost (₹) *</label>
+              <input type="number" id="addLaborCost" step="0.01" min="0" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+              <label for="addTotalCost">Total Cost (₹)</label>
+              <input type="number" id="addTotalCost" step="0.01" placeholder="0.00" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+              <label for="addOdometer">Odometer (KM) *</label>
+              <input type="number" id="addOdometer" min="0" placeholder="e.g. 45000" required>
+            </div>
+
+            <div class="form-group">
+              <label for="addServiceCenter">Service Center *</label>
+              <select id="addServiceCenter" required>
+                <option value="">Select Service Center</option>
+                <option value="Bengaluru Central">Bengaluru Central</option>
+                <option value="Electronic City Garage">Electronic City Garage</option>
+                <option value="Hebbal Motors">Hebbal Motors</option>
+                <option value="Mysuru Road Service">Mysuru Road Service</option>
+                <option value="Whitefield Auto Care">Whitefield Auto Care</option>
+                <option value="Yelahanka Service Hub">Yelahanka Service Hub</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="addMaintenanceStatus">Maintenance Status *</label>
+              <select id="addMaintenanceStatus" required>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed" selected>Completed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btnCancelAdd">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitAdd">Insert Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EDIT SERVICE RECORD -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalEditRecord">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Service Record <span id="editModalRecordId" class="badge badge-info"></span></h3>
+        <button class="modal-close" id="btnCloseEditModal">&times;</button>
+      </div>
+      <form id="formEditRecord">
+        <div class="modal-body">
+          <div class="form-alert" id="editFormAlert" style="display: none;"></div>
+          <input type="hidden" id="editServiceId">
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="editServiceDate">Service Date</label>
+              <input type="date" id="editServiceDate" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editVehicleType">Vehicle Type</label>
+              <select id="editVehicleType" required>
+                <option value="Hatchback">Hatchback</option>
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Motorcycle">Motorcycle</option>
+                <option value="Van">Van</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editVehicleBrand">Vehicle Brand</label>
+              <input type="text" id="editVehicleBrand" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editVehicleModel">Vehicle Model</label>
+              <input type="text" id="editVehicleModel" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editServiceType">Service Performed</label>
+              <select id="editServiceType" required>
+                <option value="General Service">General Service</option>
+                <option value="Oil Change">Oil Change</option>
+                <option value="Brake Repair">Brake Repair</option>
+                <option value="Clutch Repair">Clutch Repair</option>
+                <option value="Engine Repair">Engine Repair</option>
+                <option value="Transmission Service">Transmission Service</option>
+                <option value="Tire Replacement">Tire Replacement</option>
+                <option value="Wheel Alignment">Wheel Alignment</option>
+                <option value="AC Repair">AC Repair</option>
+                <option value="Battery Replacement">Battery Replacement</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editPartsCost">Parts Cost (₹)</label>
+              <input type="number" id="editPartsCost" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editLaborCost">Labor Cost (₹)</label>
+              <input type="number" id="editLaborCost" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editTotalCost">Total Cost (₹)</label>
+              <input type="number" id="editTotalCost" step="0.01" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+              <label for="editOdometer">Odometer (KM)</label>
+              <input type="number" id="editOdometer" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editServiceCenter">Service Center</label>
+              <select id="editServiceCenter" required>
+                <option value="Bengaluru Central">Bengaluru Central</option>
+                <option value="Electronic City Garage">Electronic City Garage</option>
+                <option value="Hebbal Motors">Hebbal Motors</option>
+                <option value="Mysuru Road Service">Mysuru Road Service</option>
+                <option value="Whitefield Auto Care">Whitefield Auto Care</option>
+                <option value="Yelahanka Service Hub">Yelahanka Service Hub</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editMaintenanceStatus">Maintenance Status</label>
+              <select id="editMaintenanceStatus" required>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btnCancelEdit">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitEdit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: DELETE CONFIRMATION -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalDeleteRecord">
+    <div class="modal-dialog modal-dialog-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete Service Record</h3>
+        <button class="modal-close" id="btnCloseDeleteModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="delete-warning-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <p class="text-center font-medium">Are you sure you want to delete service record <strong id="deleteRecordIdDisplay"></strong>?</p>
+        <p class="text-center text-muted text-sm mt-2" id="deleteSafetyNotice">
+          Academic Safety Shield: Deleting original 600 records is strictly prevented. Only test records can be deleted.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="btnCancelDelete">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmDelete">Delete Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Frontend Script -->
+  <script src="script.js"></script>
+</body>
+</html>

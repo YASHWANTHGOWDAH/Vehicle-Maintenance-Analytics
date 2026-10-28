@@ -1,0 +1,29 @@
+{
+  "name": "vehicle-service-maintenance-analytics",
+  "version": "1.0.0",
+  "description": "Academic Project: Vehicle Service and Maintenance Analytics Using MongoDB",
+  "main": "server/server.js",
+  "scripts": {
+    "build": "echo 'Build completed successfully'",
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "db:import": "node database/import.js",
+    "db:queries": "node database/queries.js",
+    "db:aggregations": "node database/aggregations.js"
+  },
+  "keywords": [
+    "mongodb",
+    "express",
+    "nodejs",
+    "vehicle-analytics",
+    "aggregation-pipelines"
+  ],
+  "author": "Academic Project Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongodb": "^6.8.0"
+  }
+}
